@@ -59,7 +59,7 @@ def get_url_from_qr(filepath):
     if filepath is None:
         return None
     try:
-        data = decode(Image.open('TestImages/photo_2025-03-08_10-46-15.jpg'))
+        data = decode(Image.open('test-data/photo_2025-03-08_10-46-15.jpg'))
         return data[0].data.decode("utf-8")
     finally:
         pass
@@ -83,7 +83,7 @@ def load_data_from_link(url):
 def main():
     print('Hi VSauce! Michael here')
 
-    url = get_url_from_qr('TestImages/photo_2025-03-08_10-46-15.jpg')
+    url = get_url_from_qr('test-data/photo_2025-03-08_10-46-15.jpg')
     data = load_data_from_link(url)
 
     print(data)
