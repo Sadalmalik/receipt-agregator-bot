@@ -1,0 +1,107 @@
+
+Примеры сообщений:
+
+{
+  "message_id": 11,
+  "from": {
+    "id": 820216855,
+    "is_bot": false,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "language_code": "ru",
+    "is_premium": true
+  },
+  "chat": {
+    "id": 820216855,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "type": "private"
+  },
+  "date": 1742199316,
+  "text": "приивет"
+}
+
+
+{
+  "message_id": 12,
+  "from": {
+    "id": 820216855,
+    "is_bot": false,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "language_code": "ru",
+    "is_premium": true
+  },
+  "chat": {
+    "id": 820216855,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "type": "private"
+  },
+  "date": 1742199474,
+  "text": "/start",
+  "entities": [
+    {
+      "offset": 0,
+      "length": 6,
+      "type": "bot_command"
+    }
+  ]
+}
+
+
+
+{
+  "message_id": 13,
+  "from": {
+    "id": 820216855,
+    "is_bot": false,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "language_code": "ru",
+    "is_premium": true
+  },
+  "chat": {
+    "id": 820216855,
+    "first_name": "Глеб",
+    "last_name": "Кузьмин",
+    "username": "kaleb_sadalmalik",
+    "type": "private"
+  },
+  "date": 1742199486,
+  "photo": [
+    {
+      "file_id": "AgACAgIAAxkBAAMNZ9favXPu-qef3eacSLBX96ZSxn0AAqvvMRvvQMBKwnY-ovtaZNsBAAMCAANzAAM2BA",
+      "file_unique_id": "AQADq-8xG-9AwEp4",
+      "file_size": 1316,
+      "width": 81,
+      "height": 90
+    },
+    {
+      "file_id": "AgACAgIAAxkBAAMNZ9favXPu-qef3eacSLBX96ZSxn0AAqvvMRvvQMBKwnY-ovtaZNsBAAMCAANtAAM2BA",
+      "file_unique_id": "AQADq-8xG-9AwEpy",
+      "file_size": 25486,
+      "width": 288,
+      "height": 320
+    },
+    {
+      "file_id": "AgACAgIAAxkBAAMNZ9favXPu-qef3eacSLBX96ZSxn0AAqvvMRvvQMBKwnY-ovtaZNsBAAMCAAN4AAM2BA",
+      "file_unique_id": "AQADq-8xG-9AwEp9",
+      "file_size": 127435,
+      "width": 721,
+      "height": 800
+    },
+    {
+      "file_id": "AgACAgIAAxkBAAMNZ9favXPu-qef3eacSLBX96ZSxn0AAqvvMRvvQMBKwnY-ovtaZNsBAAMCAAN5AAM2BA",
+      "file_unique_id": "AQADq-8xG-9AwEp-",
+      "file_size": 171994,
+      "width": 980,
+      "height": 1088
+    }
+  ]
+}

@@ -20,9 +20,18 @@ help_message = """Команда не реализована"""
 def main():
     bot = TBot(bot_token)
 
-    @bot.command("/start")
-    def command_start(args):
-        print("Handle start")
+    @bot.on_photo
+    def handle_photo(file, message):
+        print(f"Handle photo:\n{file}\n")
+
+    @bot.on_command("/start")
+    def command_start(command, message):
+        print(f"Handle command:\n{command}\n")
+
+    @bot.on_command("/stop")
+    def command_start(command, message):
+        print(f"Handle command:\n{command}\n")
+        bot.stop()
 
     bot.run()
 
