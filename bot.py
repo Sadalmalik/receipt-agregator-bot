@@ -26,6 +26,7 @@ texts = {
     "reject_command": """У вас недостаточно прав для выполнения этой команды""",
     "receipts_added": """Добавленно {count} чеков суммой в {summ:.2f} динар""",
     "no_receipts_added": """Новых чеков не найдено""",
+    "unknown_receipts": """Не удалось распарсить некоторые данные: {count}""",
     "stats": """Статистика:
 Пользователей: {users}
 Чеков отсканировано: {receipts}
@@ -42,6 +43,7 @@ def main():
     if "dirty" not in main_session or main_session["dirty"]:
         database_backup(f"private/database")
         main_session["dirty"] = False
+        main_session["broken_qrs"] = []
     database_init(f"private/database")
     setup()
 
@@ -104,9 +106,9 @@ def main():
 
     @bot.on_photo
     def handle_photo(file, message):
+        session = session_manager.get_session(message["from"]["id"])
         receipts = read_receipts(file["local_path"])
         if receipts is not None and len(receipts) > 0:
-            session = session_manager.get_session(message["from"]["id"])
             if "receipts" not in session:
                 session["receipts"] = []
             r_list = session["receipts"]
@@ -115,67 +117,80 @@ def main():
                     "file": file,
                     "receipt": rec
                 })
+        else:
+            if "no-receipts" not in session:
+                session["no-receipts"] = []
+            session["no-receipts"].append(file)
 
     @bot.on_message
     def handle_message(message, commands, photos):
         session = session_manager.get_session(message["from"]["id"])
-        if "receipts" not in session:
-            return
-        # distinct
-        receipts = {}
-        for entry in session["receipts"]:
-            invoice = entry["receipt"]["invoice"]
-            if invoice in receipts:
-                continue
-            receipts[invoice] = entry
 
-        # store to database
-        added = 0
-        summar = Decimal(0)
-        for invoice, entry in receipts.items():
-            file = entry["file"]
-            receipt = entry["receipt"]
-            db_receipt, created = Receipt.get_or_create(
-                invoice=receipt['invoice'],
-                token=receipt['token'],
-                datetime=receipt['datetime'],
-                link=receipt['url'],
-                total=Decimal(0),
-            )
-            if not created:
-                continue
-            main_session["dirty"] = True
-            total = Decimal(0)
-            for item in receipt['items']:
-                Product.create(
-                    receipt_id=db_receipt.id,
-                    name=item["name"],
-                    quantity=item["quantity"],
-                    total=Decimal(item["total"]),
-                    unitPrice=Decimal(item["unitPrice"]),
-                    label=item["label"],
-                    labelRate=int(item["labelRate"]),
-                    taxBaseAmount=Decimal(item["taxBaseAmount"]),
-                    vatAmount=Decimal(item["vatAmount"]),
+        if "no-receipts" in session:
+            bot.send({
+                'chat_id': message["chat"]["id"],
+                'text': texts["unknown_receipts"].format(count = len(session["no-receipts"]))
+            })
+            main_session["broken_qrs"].extend(session["no-receipts"])
+            session_manager.save_session("root")
+            del session["no-receipts"]
+
+        if "receipts" in session:
+            # distinct
+            receipts = {}
+            for entry in session["receipts"]:
+                invoice = entry["receipt"]["invoice"]
+                if invoice in receipts:
+                    continue
+                receipts[invoice] = entry
+
+            # store to database
+            added = 0
+            summar = Decimal(0)
+            for invoice, entry in receipts.items():
+                file = entry["file"]
+                receipt = entry["receipt"]
+                db_receipt, created = Receipt.get_or_create(
+                    invoice=receipt['invoice'],
+                    token=receipt['token'],
+                    datetime=receipt['datetime'],
+                    link=receipt['url'],
+                    total=Decimal(0),
                 )
-                total += Decimal(item["total"])
-            db_receipt.total = total
-            db_receipt.save()
-            added += 1
-            summar += total
+                if not created:
+                    continue
+                main_session["dirty"] = True
+                total = Decimal(0)
+                for item in receipt['items']:
+                    Product.create(
+                        receipt_id=db_receipt.id,
+                        name=item["name"],
+                        quantity=item["quantity"],
+                        total=Decimal(item["total"]),
+                        unitPrice=Decimal(item["unitPrice"]),
+                        label=item["label"],
+                        labelRate=int(item["labelRate"]),
+                        taxBaseAmount=Decimal(item["taxBaseAmount"]),
+                        vatAmount=Decimal(item["vatAmount"]),
+                    )
+                    total += Decimal(item["total"])
+                db_receipt.total = total
+                db_receipt.save()
+                added += 1
+                summar += total
 
-        if added > 0:
-            bot.send({
-                'chat_id': message["chat"]["id"],
-                'text': texts["receipts_added"].format(count=added, summ=summar)
-            })
-        else:
-            bot.send({
-                'chat_id': message["chat"]["id"],
-                'text': texts["no_receipts_added"]
-            })
+            if added > 0:
+                bot.send({
+                    'chat_id': message["chat"]["id"],
+                    'text': texts["receipts_added"].format(count=added, summ=summar)
+                })
+            else:
+                bot.send({
+                    'chat_id': message["chat"]["id"],
+                    'text': texts["no_receipts_added"]
+                })
 
-        del session["receipts"]
+            del session["receipts"]
 
     @bot.on_update
     def handle_update():

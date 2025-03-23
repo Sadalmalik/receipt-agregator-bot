@@ -33,7 +33,7 @@ class SessionsManager:
             file = os.path.join(self._storage, f"{sid}.json")
             if os.path.exists(file):
                 with open(file, "w", encoding="utf8") as f:
-                    json.dump(session["data"], f)
+                    json.dump(session["data"], f, indent=2)
 
     def update(self):
         curr_time = datetime.datetime.now()
@@ -44,7 +44,7 @@ class SessionsManager:
             file = os.path.join(self._storage, f"{sid}.json")
             if os.path.exists(file):
                 with open(file, "w", encoding="utf8") as f:
-                    json.dump(session["data"], f)
+                    json.dump(session["data"], f, indent=2)
             self._sessions[sid] = None
             del self._sessions[sid]
 
@@ -52,7 +52,7 @@ class SessionsManager:
         for sid, session in self._sessions.items():
             file = os.path.join(self._storage, f"{sid}.json")
             with open(file, "w", encoding="utf8") as f:
-                json.dump(session["data"], f)
+                json.dump(session["data"], f, indent=2)
         if clear_cache:
             self._sessions.clear()
 

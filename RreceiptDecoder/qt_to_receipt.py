@@ -1,4 +1,3 @@
-
 import re
 import requests
 import urllib.parse
@@ -73,11 +72,12 @@ def read_receipts(path_to_photo):
     data = []
     urls = get_urls_from_qr(path_to_photo)
     for url in urls:
-        config = load_ajax_config(url)
-        if config is None:
-            return None
-        config["file"] = path_to_photo
-        data.append(load_data(config))
+        if url.startswith("http://") or url.startswith("https://"):
+            config = load_ajax_config(url)
+            if config is None:
+                return None
+            config["file"] = path_to_photo
+            data.append(load_data(config))
     return data
 
 
@@ -90,6 +90,8 @@ def main():
     receipts = read_receipts('../test-data/m71_file_31.jpg')
     print(f"Result 3:\n\n{receipts}\n\n\n\n")
     receipts = read_receipts('../test-data/m82_file_35.jpg')
+    print(f"Result 4:\n\n{receipts}\n\n\n\n")
+    receipts = read_receipts('../test-data/m150_file_51.jpg')
     print(f"Result 4:\n\n{receipts}\n\n\n\n")
 
 
