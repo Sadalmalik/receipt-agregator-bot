@@ -1,6 +1,20 @@
 from peewee import *
 
-db = SqliteDatabase('accounting.db')
+db = SqliteDatabase(None)
+
+
+def init_database(name):
+    db.init(name)
+    db.connect()
+    db.create_tables([BotUser, Receipt, Product])
+
+
+class BotUser(Model):
+    tid = BigIntegerField()
+    is_admin = BooleanField(default=False)
+
+    class Meta:
+        database = db  # This model uses the "people.db" database.
 
 
 class Receipt(Model):
