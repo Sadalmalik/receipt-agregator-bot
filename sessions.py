@@ -24,7 +24,16 @@ class SessionsManager:
                 session = {"data": {}}
             self._sessions[sid] = session
         session["time"] = datetime.datetime.now() + datetime.timedelta(seconds=self._memorytime)
+        session["data"]["sid"] = sid
         return session["data"]
+
+    def save_session(self, sid):
+        if sid in self._sessions:
+            session = self._sessions[sid]
+            file = os.path.join(self._storage, f"{sid}.json")
+            if os.path.exists(file):
+                with open(file, "w", encoding="utf8") as f:
+                    json.dump(session["data"], f)
 
     def update(self):
         curr_time = datetime.datetime.now()
@@ -42,9 +51,8 @@ class SessionsManager:
     def save_all(self, clear_cache=True):
         for sid, session in self._sessions.items():
             file = os.path.join(self._storage, f"{sid}.json")
-            if os.path.exists(file):
-                with open(file, "w", encoding="utf8") as f:
-                    json.dump(session["data"], f)
+            with open(file, "w", encoding="utf8") as f:
+                json.dump(session["data"], f)
         if clear_cache:
             self._sessions.clear()
 

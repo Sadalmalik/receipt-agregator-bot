@@ -1,10 +1,22 @@
+import os
+import datetime
+import shutil
 from peewee import *
 
 db = SqliteDatabase(None)
 
 
-def init_database(name):
-    db.init(name)
+def database_backup(name):
+    timestamp = datetime.datetime.now().strftime("%m.%d.%Y_%H.%M.%S")
+    src = os.path.abspath(f'{name}.db')
+    if os.path.exists(src):
+        dst = os.path.abspath(f'{name}_{timestamp}.db')
+        shutil.copy(src, dst)
+
+
+def database_init(name):
+    path = os.path.abspath(f'{name}.db')
+    db.init(path)
     db.connect()
     db.create_tables([BotUser, Receipt, Product])
 
@@ -19,9 +31,11 @@ class BotUser(Model):
 
 class Receipt(Model):
     id = AutoField()
-    date = DateField()
-    time = TimeField()
-    link = CharField(512)
+    invoice = CharField(64)
+    token = CharField(64)
+    datetime = DateTimeField(default=datetime.datetime.now)
+    link = CharField(2048)
+    total = DecimalField()
 
     class Meta:
         database = db  # This model uses the "people.db" database.
@@ -33,7 +47,7 @@ class Product(Model):
     name = CharField()
     quantity = IntegerField()
     total = DecimalField()
-    price = DecimalField()
+    unitPrice = DecimalField()
     label = CharField(4)
     labelRate = IntegerField()
     taxBaseAmount = DecimalField()

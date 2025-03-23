@@ -1,4 +1,4 @@
-headers = {
+ajax_headers = {
     # ":authority": "suf.purs.gov.rs",
     # ":method": "POST",
     # ":path": "/specifications",

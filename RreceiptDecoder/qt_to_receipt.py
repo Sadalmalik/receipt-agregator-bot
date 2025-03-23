@@ -1,10 +1,11 @@
+
+import re
+import requests
+import urllib.parse
+from datetime import datetime
 from PIL import Image
 from pyzbar.pyzbar import decode
-import requests
-import re
-import urllib.parse
-
-from RreceiptDecoder.AjaxHeaders import headers
+from RreceiptDecoder.AjaxHeaders import ajax_headers
 
 
 def get_urls_from_qr(filepath):
@@ -24,7 +25,6 @@ def load_ajax_config(url):
     r = requests.get(url)
     if r.status_code != 200:
         return None
-    print(f"Request {url}\nHeaders:\n{r.request.headers}\n\n")
     data = {
         'url': url
     }
@@ -37,12 +37,19 @@ def load_ajax_config(url):
     if len(matches) > 0:
         data['rootPath'] = matches[0]
 
+    # 23.3.2025. 14:46:44
+    # 4.3.2025. 19:01:36
+    matches = re.findall(r"(\d{1,2}).(\d{1,2}).(\d{1,4})\. (\d{1,2}):(\d{1,2}):(\d{1,2})", r.text)
+    if len(matches) > 0:
+        day, month, year, hour, minute, second = [int(e) for e in matches[0]]
+        data['datetime'] = datetime(year=year, month=month, day=day, hour=hour, minute=minute, second=second)
+
     return data
 
 
 def load_data(config):
     new_url = urllib.parse.urljoin(config['rootPath'], '/specifications')
-    new_headers = dict(headers)
+    new_headers = dict(ajax_headers)
     new_headers['referer'] = config['url']
     new_body = f"invoiceNumber={config["invoice"]}&token={config["token"]}"
 
@@ -55,6 +62,7 @@ def load_data(config):
             "url": config['url'],
             "invoice": config['invoice'],
             "token": config['token'],
+            "datetime": config['datetime'],
             "items": data["items"],
         }
 
@@ -76,7 +84,13 @@ def read_receipts(path_to_photo):
 def main():
     print('Hi VSauce! Michael here')
     receipts = read_receipts('../test-data/photo_2025-03-08_10-46-15.jpg')
-    print(receipts)
+    print(f"Result 1:\n\n{receipts}\n\n\n\n")
+    receipts = read_receipts('../test-data/m50_file_28.jpg')
+    print(f"Result 2:\n\n{receipts}\n\n\n\n")
+    receipts = read_receipts('../test-data/m71_file_31.jpg')
+    print(f"Result 3:\n\n{receipts}\n\n\n\n")
+    receipts = read_receipts('../test-data/m82_file_35.jpg')
+    print(f"Result 4:\n\n{receipts}\n\n\n\n")
 
 
 if __name__ == "__main__":

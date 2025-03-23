@@ -27,11 +27,12 @@ class TBot:
         self._running = False
         self._update = kwarg.get("update", 0)
         self._timeout = kwarg.get("polling", 300)
-        self._download_path = kwarg.get("download_path", "../downloads")
+        self._download_path = kwarg.get("download_path", "downloads")
         self._command_handlers = {}
         self._undefined_command_handler = None
         self._message_handler = None
         self._photo_handler = None
+        self._after_update = None
 
     def _call(self, method, data=None):
         response = requests.post(f"https://api.telegram.org/bot{self._token}/{method}", data=data)
@@ -41,7 +42,8 @@ class TBot:
         if "file_path" not in file:
             return None
         r = requests.get(f"https://api.telegram.org/file/bot{self._token}/{file["file_path"]}", allow_redirects=True)
-        fpath = f"{self._download_path}/{message["message_id"]}_{file["file_path"]}"
+        fname = os.path.basename(file["file_path"])
+        fpath = f"{self._download_path}/m{message["message_id"]}_{fname}"
         folder = os.path.dirname(fpath)
         if not os.path.exists(folder):
             os.makedirs(folder)
@@ -107,6 +109,11 @@ class TBot:
             raise Exception("Message handler already defined!")
         self._message_handler = func
 
+    def on_update(self, func):
+        if self._after_update is not None:
+            raise Exception("Update handler already defined!")
+        self._after_update = func
+
     def send(self, message):
         return self._call('sendMessage', message)
 
@@ -127,6 +134,8 @@ class TBot:
                     if self._update <= idx:
                         self._update = idx + 1
                     self._handle_message(message)
+            if self._after_update:
+                self._after_update()
 
         print("Bot polling complete")
 
