@@ -68,7 +68,7 @@ def load_data(config):
     return None
 
 
-def read_receipts(path_to_photo):
+def read_receipts_from_image(path_to_photo):
     data = []
     urls = get_urls_from_qr(path_to_photo)
     for url in urls:
@@ -81,17 +81,29 @@ def read_receipts(path_to_photo):
     return data
 
 
+def read_receipts_from_urls(*urls):
+    data = []
+    for url in urls:
+        if url.startswith("http://suf.purs.gov.rs") or url.startswith("https://suf.purs.gov.rs"):
+            config = load_ajax_config(url)
+            if config is None:
+                return None
+            config["file"] = ''
+            data.append(load_data(config))
+    return data
+
+
 def main():
     print('Hi VSauce! Michael here')
-    receipts = read_receipts('../test-data/photo_2025-03-08_10-46-15.jpg')
+    receipts = read_receipts_from_image('../test-data/photo_2025-03-08_10-46-15.jpg')
     print(f"Result 1:\n\n{receipts}\n\n\n\n")
-    receipts = read_receipts('../test-data/m50_file_28.jpg')
+    receipts = read_receipts_from_image('../test-data/m50_file_28.jpg')
     print(f"Result 2:\n\n{receipts}\n\n\n\n")
-    receipts = read_receipts('../test-data/m71_file_31.jpg')
+    receipts = read_receipts_from_image('../test-data/m71_file_31.jpg')
     print(f"Result 3:\n\n{receipts}\n\n\n\n")
-    receipts = read_receipts('../test-data/m82_file_35.jpg')
+    receipts = read_receipts_from_image('../test-data/m82_file_35.jpg')
     print(f"Result 4:\n\n{receipts}\n\n\n\n")
-    receipts = read_receipts('../test-data/m150_file_51.jpg')
+    receipts = read_receipts_from_image('../test-data/m150_file_51.jpg')
     print(f"Result 4:\n\n{receipts}\n\n\n\n")
 
 

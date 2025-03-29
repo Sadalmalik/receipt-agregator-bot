@@ -21,6 +21,17 @@ def _get_commands(message):
     return commands
 
 
+def get_urls(message):
+    urls = []
+    if "text" in message and "entities" in message:
+        text = message["text"]
+        for entity in message["entities"]:
+            if entity["type"] != "url":
+                continue
+            urls.append(text[entity["offset"]:entity["offset"] + entity["length"]])
+    return urls
+
+
 class TBot:
     def __init__(self, token, **kwarg):
         self._token = token
@@ -32,6 +43,8 @@ class TBot:
         self._undefined_command_handler = None
         self._message_handler = None
         self._photo_handler = None
+        self._photo_complete_handler = None
+        self._after_messages_handled = None
         self._after_update = None
 
     def _call(self, method, data=None):
@@ -52,8 +65,6 @@ class TBot:
         return fpath
 
     def _download_all_photo(self, message):
-        if "photo" not in message:
-            return None
         files = {}
         for photo in message["photo"]:
             result = self._call("getFile", {"file_id": photo["file_id"]})
@@ -66,27 +77,38 @@ class TBot:
             result.append(file)
         return result
 
-    def _handle_message(self, message):
-        commands = _get_commands(message)
+    def _handle_photo(self, message):
+        if "photo" not in message:
+            return
         photos = self._download_all_photo(message)
-        if self._photo_handler is not None and photos is not None:
+        if len(photos) == 0:
+            return
+        if self._photo_handler:
             for file in photos:
-                self._photo_handler(file, message)
-            photos = None
-        if len(self._command_handlers) > 0:
-            for command in commands:
-                if command["command"] in self._command_handlers:
-                    self._command_handlers[command["command"]](command=command, message=message)
-                elif self._undefined_command_handler is not None:
-                    self._undefined_command_handler(command=command, message=message)
-                else:
-                    print(f"Unknown command:\n{command}\n")
-                    self.send({
-                        'chat_id': message["chat"]["id"],
-                        'text': f"Unknown command: {command["command"]}"
-                    })
-            commands = None
-        self._message_handler(message, commands=commands, photos=photos)
+                self._photo_handler(message, file)
+        if self._photo_complete_handler:
+            self._photo_complete_handler(message, photos)
+
+    def _handle_commands(self, message):
+        commands = _get_commands(message)
+        if len(self._command_handlers) == 0:
+            return
+        for command in commands:
+            if command["command"] in self._command_handlers:
+                self._command_handlers[command["command"]](command=command, message=message)
+            elif self._undefined_command_handler is not None:
+                self._undefined_command_handler(command=command, message=message)
+            else:
+                print(f"Unknown command:\n{command}\n")
+                self.send({
+                    'chat_id': message["chat"]["id"],
+                    'text': f"Unknown command: {command["command"]}"
+                })
+
+    def _handle_message(self, message):
+        self._handle_photo(message)
+        self._handle_commands(message)
+        self._message_handler(message)
 
     def on_command(self, command):
         def decorator(func):
@@ -104,10 +126,20 @@ class TBot:
             raise Exception("Photo handler already defined!")
         self._photo_handler = func
 
+    def on_photos_handled(self, func):
+        if self._photo_complete_handler is not None:
+            raise Exception("Photo complete handler already defined!")
+        self._photo_complete_handler = func
+
     def on_message(self, func):
         if self._message_handler is not None:
             raise Exception("Message handler already defined!")
         self._message_handler = func
+
+    def on_messages_handled(self, func):
+        if self._after_messages_handled is not None:
+            raise Exception("After Messages handler already defined!")
+        self._after_messages_handled = func
 
     def on_update(self, func):
         if self._after_update is not None:
@@ -127,13 +159,21 @@ class TBot:
                 "offset": self._update,
                 "timeout": self._timeout
             })
+            frames = set()
             if data["ok"] and data["result"] and len(data["result"]) > 0:
                 for update in data["result"]:
                     message = update["message"]
                     idx = update["update_id"]
                     if self._update <= idx:
                         self._update = idx + 1
+                    frames.add((message['from']['id'], message['chat']['id']))
                     self._handle_message(message)
+            if self._after_messages_handled:
+                for frame in frames:
+                    self._after_messages_handled({
+                        "from": frame[0],
+                        "chat": frame[1]
+                    })
             if self._after_update:
                 self._after_update()
 

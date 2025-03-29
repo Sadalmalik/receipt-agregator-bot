@@ -7,7 +7,7 @@ db = SqliteDatabase(None)
 
 
 def database_backup(name):
-    timestamp = datetime.datetime.now().strftime("%m.%d.%Y_%H.%M.%S")
+    timestamp = datetime.datetime.now().strftime("%Y.%m.%d_%H.%M.%S")
     src = os.path.abspath(f'{name}.db')
     if os.path.exists(src):
         dst = os.path.abspath(f'{name}_{timestamp}.db')
@@ -22,7 +22,7 @@ def database_init(name):
 
 
 class BotUser(Model):
-    tid = BigIntegerField()
+    tid = BigIntegerField(primary_key=True)
     is_admin = BooleanField(default=False)
 
     class Meta:
@@ -31,7 +31,8 @@ class BotUser(Model):
 
 class Receipt(Model):
     id = AutoField()
-    invoice = CharField(64)
+    uid = BigIntegerField()
+    invoice = CharField(64, unique=True)
     token = CharField(64)
     datetime = DateTimeField(default=datetime.datetime.now)
     link = CharField(2048)
@@ -43,6 +44,7 @@ class Receipt(Model):
 
 class Product(Model):
     id = AutoField()
+    uid = BigIntegerField()
     receipt_id = ForeignKeyField(Receipt)
     name = CharField()
     quantity = IntegerField()
@@ -52,6 +54,7 @@ class Product(Model):
     labelRate = IntegerField()
     taxBaseAmount = DecimalField()
     vatAmount = DecimalField()
+    datetime = DateTimeField(default=datetime.datetime.now)
 
     class Meta:
         database = db  # This model uses the "people.db" database.
